@@ -66,6 +66,10 @@ finance_manager_final/
 │   │   │   ├── TransactionRepository.java    # Houses index-optimized sorted queries
 │   │   │   └── UserRepository.java
 │   │   ├── service/                          # Business Logic Layer (Interacts with database/LLM)
+│   │   │   ├── AiService.java                # Provides all ai related services
+│   │   │   ├── AuthenticationService.java    
+│   │   │   └── CategoryService.java
+│   │   │   └── TransactionService.java
 │   │   └── FinanceManagerApplication.java    # The Main Spring Boot Entry Point
 │   └── src/main/resources/
 │       └── application.properties            # Contains database configurations & credentials
