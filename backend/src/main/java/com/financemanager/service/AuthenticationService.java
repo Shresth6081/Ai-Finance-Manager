@@ -4,12 +4,12 @@ import com.financemanager.config.JwtService;
 import com.financemanager.dto.AuthenticationRequest;
 import com.financemanager.dto.AuthenticationResponse;
 import com.financemanager.dto.RegisterRequest;
+import com.financemanager.dto.ResourceNotFoundException;
 import com.financemanager.model.User;
 import com.financemanager.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -45,7 +45,7 @@ public class AuthenticationService {
                         request.getUsername(),
                         request.getPassword()));
         var user = repository.findByUsername(request.getUsername())
-                .orElseThrow();
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + request.getUsername()));
         var jwtToken = jwtService.generateToken(user);
         return AuthenticationResponse.builder()
                 .token(jwtToken)

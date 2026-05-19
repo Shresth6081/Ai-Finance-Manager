@@ -15,7 +15,15 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "transactions")
+@Table(
+    name = "transactions",
+    indexes = {
+        // Covers queries that filter/sort by date per user (dashboard, reports)
+        @Index(name = "idx_transaction_user_date", columnList = "user_id, date"),
+        // Covers any standalone date-range queries
+        @Index(name = "idx_transaction_date", columnList = "date")
+    }
+)
 public class Transaction {
 
     @Id

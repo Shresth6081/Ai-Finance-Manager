@@ -12,7 +12,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "categories")
+@Table(
+    name = "categories",
+    indexes = {
+        // Covers findByUserAndType — filters by both user and type
+        @Index(name = "idx_category_user_type", columnList = "user_id, type"),
+        // Covers existsByNameAndUserAndType — uniqueness check on every save
+        @Index(name = "idx_category_name_user_type", columnList = "name, user_id, type")
+    }
+)
 public class Category {
 
     @Id
