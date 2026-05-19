@@ -56,7 +56,6 @@ finance_manager_final/
 │   │   │   ├── RegisterRequest.java
 │   │   │   ├── ResourceNotFoundException.java # Kept here for clean controller payload mappings
 │   │   │   └── TransactionDTO.java
-│   │   ├── Helper/                           # Utility or parsing functions
 │   │   ├── model/                            # Database Entities (Maps directly to MySQL tables)
 │   │   │   ├── Category.java                 # Houses category attributes
 │   │   │   ├── Transaction.java              # Holds index configurations & table metrics
