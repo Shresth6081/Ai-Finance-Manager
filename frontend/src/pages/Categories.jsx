@@ -8,7 +8,10 @@ const Categories = () => {
     const [showModal, setShowModal] = useState(false);
     const [newCategory, setNewCategory] = useState({ name: '', type: 'EXPENSE', color: '#ef4444' });
     const [error, setError] = useState('');
-    const [initialized, setInitialized] = useState(false);
+    // useRef so the flag is set synchronously — prevents React Strict Mode's
+    // double effect invocation from firing POST /initialize twice
+    const initializingRef = React.useRef(false);
+
 
     // New state for viewing transactions by category
     const [selectedCategory, setSelectedCategory] = useState(null);
@@ -25,9 +28,10 @@ const Categories = () => {
             const response = await api.get('/categories');
             setCategories(response.data);
 
-            // Initialize default categories if none exist and not already initialized
-            if (response.data.length === 0 && !initialized) {
-                setInitialized(true);
+            if (response.data.length === 0 && !initializingRef.current) {
+                // Mark as initializing synchronously before any await so that
+                // a concurrent call (React Strict Mode) sees it immediately
+                initializingRef.current = true;
                 await api.post('/categories/initialize');
                 const updatedResponse = await api.get('/categories');
                 setCategories(updatedResponse.data);

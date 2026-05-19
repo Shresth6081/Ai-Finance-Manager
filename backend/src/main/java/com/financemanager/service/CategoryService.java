@@ -77,25 +77,22 @@ public class CategoryService {
 
     @Transactional
     public void initializeDefaultCategories(User user) {
-        // Check if user already has categories
-        if (!categoryRepository.findByUser(user).isEmpty()) {
-            return;
-        }
+        createDefaultCategoryIfAbsent("Salary",        TransactionType.INCOME,  "#22c55e", user);
+        createDefaultCategoryIfAbsent("Freelance",     TransactionType.INCOME,  "#10b981", user);
+        createDefaultCategoryIfAbsent("Investment",    TransactionType.INCOME,  "#059669", user);
 
-        // Create default income categories
-        createDefaultCategory("Salary", TransactionType.INCOME, "#22c55e", user);
-        createDefaultCategory("Freelance", TransactionType.INCOME, "#10b981", user);
-        createDefaultCategory("Investment", TransactionType.INCOME, "#059669", user);
-
-        // Create default expense categories
-        createDefaultCategory("Food", TransactionType.EXPENSE, "#ef4444", user);
-        createDefaultCategory("Transport", TransactionType.EXPENSE, "#f97316", user);
-        createDefaultCategory("Entertainment", TransactionType.EXPENSE, "#ec4899", user);
-        createDefaultCategory("Utilities", TransactionType.EXPENSE, "#8b5cf6", user);
-        createDefaultCategory("Shopping", TransactionType.EXPENSE, "#3b82f6", user);
+        createDefaultCategoryIfAbsent("Food",          TransactionType.EXPENSE, "#ef4444", user);
+        createDefaultCategoryIfAbsent("Transport",     TransactionType.EXPENSE, "#f97316", user);
+        createDefaultCategoryIfAbsent("Entertainment", TransactionType.EXPENSE, "#ec4899", user);
+        createDefaultCategoryIfAbsent("Utilities",     TransactionType.EXPENSE, "#8b5cf6", user);
+        createDefaultCategoryIfAbsent("Shopping",      TransactionType.EXPENSE, "#3b82f6", user);
     }
 
-    private void createDefaultCategory(String name, TransactionType type, String color, User user) {
+    private void createDefaultCategoryIfAbsent(String name, TransactionType type, String color, User user) {
+        // Skip if this exact category already exists — safe against concurrent calls
+        if (categoryRepository.existsByNameAndUserAndType(name, user, type)) {
+            return;
+        }
         Category category = Category.builder()
                 .name(name)
                 .type(type)
