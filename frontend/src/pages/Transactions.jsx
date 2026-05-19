@@ -16,6 +16,7 @@ const Transactions = () => {
     const [showModal, setShowModal] = useState(false);
     const [editingTransaction, setEditingTransaction] = useState(null); // null = Add mode, object = Edit mode
     const [formData, setFormData] = useState(EMPTY_FORM);
+    const [submitting, setSubmitting] = useState(false);
 
     const fetchTransactions = async () => {
         try {
@@ -62,6 +63,8 @@ const Transactions = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (submitting) return;
+        setSubmitting(true);
         try {
             if (editingTransaction) {
                 await api.put(`/transactions/${editingTransaction.id}`, formData);
@@ -72,6 +75,8 @@ const Transactions = () => {
             fetchTransactions();
         } catch (error) {
             console.error('Failed to save transaction', error);
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -186,8 +191,19 @@ const Transactions = () => {
                             </div>
                             <div className="flex gap-4 mt-6">
                                 <button type="button" onClick={closeModal} className="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                                <button type="submit" className="flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-700">
-                                    {editingTransaction ? 'Update' : 'Save'}
+                                <button
+                                    type="submit"
+                                    disabled={submitting}
+                                    className={`flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary transition-opacity duration-200 ${
+                                        submitting
+                                            ? 'opacity-50 cursor-not-allowed'
+                                            : 'hover:bg-blue-700 cursor-pointer'
+                                    }`}
+                                >
+                                    {submitting
+                                        ? (editingTransaction ? 'Updating...' : 'Saving...')
+                                        : (editingTransaction ? 'Update' : 'Save')
+                                    }
                                 </button>
                             </div>
                         </form>
