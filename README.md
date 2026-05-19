@@ -35,23 +35,68 @@ AI Finance Manager is a full-stack personal finance management application. It f
 
 ```text
 finance_manager_final/
-├── backend/                  # Spring Boot Maven Project
+├── backend/                                  # Spring Boot Maven Project
 │   ├── src/main/java/com/financemanager/
-│   │   ├── config/           # JWT & Spring Security Configurations
-│   │   ├── controller/       # REST API Endpoints (AI, Transaction, Auth)
-│   │   ├── dto/              # Data Transfer Objects (Request/Response)
-│   │   ├── model/            # JPA/Hibernate Entities (User, Transaction)
-│   │   ├── repository/       # Spring Data JPA Repositories
-│   │   └── service/          # Core Business Logic Layer
-│   └── src/main/resources/   # Application properties & SQL scripts
-├── frontend/                 # React Vite Project
+│   │   ├── config/                           # Security, JWT & Web Routing Configuration
+│   │   │   ├── ApplicationConfig.java
+│   │   │   ├── JwtAuthenticationFilter.java
+│   │   │   ├── JwtService.java
+│   │   │   ├── SecurityConfig.java
+│   │   │   └── WebClientConfig.java          # Configures connections to local Ollama instance
+│   │   ├── controller/                       # REST Endpoints (Communicates with React frontend)
+│   │   │   ├── AIController.java             # Handles expense categorization & advice prompts
+│   │   │   ├── AuthenticationController.java  # Handles login and registration routing
+│   │   │   ├── CategoryController.java
+│   │   │   ├── TransactionController.java
+│   │   │   └── ValidateController.java       # Validates tokens or session integrity
+│   │   ├── dto/                              # Data Transfer Objects & Custom Domain Exceptions
+│   │   │   ├── AuthenticationRequest.java
+│   │   │   ├── AuthenticationResponse.java
+│   │   │   ├── CategoryDTO.java
+│   │   │   ├── RegisterRequest.java
+│   │   │   ├── ResourceNotFoundException.java # Kept here for clean controller payload mappings
+│   │   │   └── TransactionDTO.java
+│   │   ├── Helper/                           # Utility or parsing functions
+│   │   ├── model/                            # Database Entities (Maps directly to MySQL tables)
+│   │   │   ├── Category.java                 # Houses category attributes
+│   │   │   ├── Transaction.java              # Holds index configurations & table metrics
+│   │   │   ├── TransactionType.java          # Enum class tracking INCOME / EXPENSE variations
+│   │   │   └── User.java                     # Implements UserDetails for system authentication
+│   │   ├── repository/                       # Database Queries via Spring Data JPA
+│   │   │   ├── CategoryRepository.java
+│   │   │   ├── TransactionRepository.java    # Houses index-optimized sorted queries
+│   │   │   └── UserRepository.java
+│   │   ├── service/                          # Business Logic Layer (Interacts with database/LLM)
+│   │   └── FinanceManagerApplication.java    # The Main Spring Boot Entry Point
+│   └── src/main/resources/
+│       └── application.properties            # Contains database configurations & credentials
+│
+├── frontend/                                 # React Vite Project
 │   ├── src/
-│   │   ├── components/       # Layouts, Sidebar, and UI Atoms
-│   │   ├── context/          # Global Authentication States
-│   │   ├── pages/            # View Dashboards (Login, Register, Transactions)
-│   │   └── services/         # Axios/Fetch API Connectivity
-│   └── tailwind.config.js    # Design Tokens & Styling Configurations
-└── .gitignore                # Global exclusion rules (node_modules, target, etc.)
+│   │   ├── components/                       # Shared layout systems and modular atoms
+│   │   │   ├── layout/
+│   │   │   │   ├── Layout.jsx                # Main interface container wrapper
+│   │   │   │   └── Sidebar.jsx               # Left navigation bar layout
+│   │   │   └── ui/
+│   │   │       └── AIAssistant.jsx           # Chat or prompt bubble for interactive tips
+│   │   ├── context/                          # State management providers
+│   │   │   └── AuthContext.jsx               # Tracks user authentication state and JWT storage
+│   │   ├── pages/                            # Full-view UI components (Routes)
+│   │   │   ├── Categories.jsx
+│   │   │   ├── Dashboard.jsx                 # Financial chart dashboards (Chart.js implementation)
+│   │   │   ├── Login.jsx
+│   │   │   ├── Register.jsx
+│   │   │   ├── Settings.jsx
+│   │   │   └── Transactions.jsx              # Tabular view of ledger listings
+│   │   ├── services/                         # API communication layers
+│   │   │   └── api.js                        # Houses baseline Axios wrappers for endpoint fetches
+│   │   ├── App.css                           # Local module style scopes
+│   │   ├── App.jsx                           # Core Router initialization mapping
+│   │   ├── index.css                         # Application-wide global styling rules (Tailwind imports)
+│   │   └── main.jsx                          # Frontend baseline mount point
+│   └── tailwind.config.js                    # Design Tokens & Layout Utility definitions
+│
+└── .gitignore                                # Excludes compiled classes, target directories, and node_modules
 ```
 
 ## ⚙️ Environment Configuration
