@@ -158,5 +158,3 @@ npm run dev
 Open your browser and navigate to the local development URL (typically http://localhost:5173).
 
 --- 
-git commit -m "Docs: Complete readme template setup"
-git push
