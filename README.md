@@ -14,7 +14,7 @@ AI Finance Manager is a full-stack personal finance management application. It f
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Backend
 * **Language/Framework:** Java 17, Spring Boot 3.x
@@ -102,7 +102,7 @@ finance_manager_final/
 └── .gitignore                                # Excludes compiled classes, target directories, and node_modules
 ```
 
-## ⚙️ Environment Configuration
+## Environment Configuration
 
 To keep production environments secure, database credentials and security signatures are decoupled from the codebase using system environment variables.
 
@@ -118,7 +118,7 @@ Ensure the following variables are configured on your hosting machine or local t
 
 ---
 
-## 🏃‍♂️ Getting Started (Local Setup)
+## Getting Started (Local Setup)
 
 Prerequisites
 
@@ -138,19 +138,14 @@ CREATE DATABASE financemanager;
 ### 2. Backend Initialization
 Navigate to the backend folder:
 
-cd backend
-
 Configure your environment variables in your active terminal session.
 
-Run the Spring Boot application using Maven:
+Run the Spring Boot application
 
-./mvnw spring-boot:run
 The backend will start hosting endpoints at http://localhost:8085.
 
 ### 3. Frontend Initialization
 Navigate to the frontend folder:
-
-cd ../frontend
 
 Install the necessary node modules and dependencies:
 
@@ -163,7 +158,5 @@ npm run dev
 Open your browser and navigate to the local development URL (typically http://localhost:5173).
 
 --- 
-
-git add README.md
 git commit -m "Docs: Complete readme template setup"
 git push
