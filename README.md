@@ -1,10 +1,10 @@
-# AI Finance Manager 💰🤖
+# AI Finance Manager
 
 AI Finance Manager is a full-stack personal finance management application. It features a robust **Spring Boot** backend API and a highly responsive **React** frontend styled with **Tailwind CSS**. The platform securely tracks transactions, structures customized budget categories, and features an on-premise intelligent assistant powered by **Ollama (Llama 3)** for automated expense categorization and contextual financial insights.
 
 ---
 
-## 🚀 Key Features
+## Key Features
 
 * **Dual-Engine Architecture:** Clean separation of client UI (`frontend`) and business logic API (`backend`) hosted within a synchronized monorepo.
 * **Intelligent Financial Insights:** Native integration with local LLMs via Ollama to categorize expenses, detect spending anomalies, and generate financial advice without sending data to third-party clouds.
@@ -31,7 +31,7 @@ AI Finance Manager is a full-stack personal finance management application. It f
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
 finance_manager_final/
@@ -163,11 +163,6 @@ npm run dev
 Open your browser and navigate to the local development URL (typically http://localhost:5173).
 
 --- 
-
-## 🔒 Security & Best Practices
-Secrets Exposure Prevention: The primary root .gitignore is pre-configured to strictly drop build outputs (/target, /node_modules), local configurations (.vscode), and explicit helper engines.
-
-Stateless Operations: User sessions are completely stateless; tokens are passed securely via request headers, eliminating standard cookie vulnerabilities.
 
 git add README.md
 git commit -m "Docs: Complete readme template setup"
