@@ -1,6 +1,5 @@
 package com.financemanager.controller;
 
-import com.financemanager.config.OllamaHealthIndicator;
 import lombok.RequiredArgsConstructor;
 import net.sourceforge.tess4j.Tesseract;
 import org.springframework.ai.chat.model.ChatModel;
@@ -22,22 +21,13 @@ import java.io.File;
 public class ReceiptController {
 
     private final ChatModel chatModel;
-    private final OllamaHealthIndicator ollamaHealthIndicator;
 
     @Value("${tesseract.datapath:C:/Program Files/Tesseract-OCR/tessdata}")
     private String tesseractDataPath;
 
     @PostMapping("/scan")
     public ResponseEntity<String> scanReceipt(@RequestParam("file") MultipartFile file) {
-        // 1. Verify if AI Model Server is active
-        if (ollamaHealthIndicator != null && !ollamaHealthIndicator.isUp()) {
-            throw new ResponseStatusException(
-                    HttpStatus.SERVICE_UNAVAILABLE,
-                    "AI model server is offline. Please make sure Ollama is running to scan receipts."
-            );
-        }
-
-        // 2. Validate input file
+        // 1. Validate input file
         if (file.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File is empty.");
         }

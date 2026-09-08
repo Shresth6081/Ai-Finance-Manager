@@ -1,6 +1,5 @@
 package com.financemanager.service;
 
-import com.financemanager.config.OllamaHealthIndicator;
 import com.financemanager.model.Transaction;
 import com.financemanager.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +17,6 @@ public class AIService {
 
     private final ChatModel chatModel;
     private final TransactionRepository transactionRepository;
-    private final OllamaHealthIndicator ollamaHealthIndicator;
 
     public String categorizeTransaction(String description, String amount) {
         String prompt = "Categorize this transaction description into a single short category (e.g., Food, Transport, Rent, Salary, Utilities, Shopping, Entertainment, Health). Description: \""
@@ -54,10 +52,6 @@ public class AIService {
     }
 
     private String callModelWithTimeout(String prompt, String defaultFallback, int timeoutSeconds) {
-        if (ollamaHealthIndicator != null && !ollamaHealthIndicator.isUp()) {
-            System.err.println("Ollama is DOWN. Skipping ChatModel call and returning fallback: " + defaultFallback);
-            return defaultFallback;
-        }
         try {
             System.out.println("Calling Spring AI ChatModel with prompt: " + prompt);
             return CompletableFuture.supplyAsync(() -> chatModel.call(prompt))
