@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 @Service
+@SuppressWarnings("null")
 public class JwtService {
 
     private static String SECRET_KEY;

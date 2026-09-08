@@ -18,6 +18,7 @@ import java.io.File;
 @RestController
 @RequestMapping("/api/v1/receipts")
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class ReceiptController {
 
     private final ChatModel chatModel;

@@ -1,6 +1,5 @@
 package com.financemanager.service;
 
-import com.financemanager.model.Transaction;
 import com.financemanager.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.model.ChatModel;
@@ -13,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class AIService {
 
     private final ChatModel chatModel;

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class AuthenticationService {
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
