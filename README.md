@@ -1,6 +1,21 @@
 # AI Finance Manager
 
-AI Finance Manager is a full-stack personal finance management application. It features a robust **Spring Boot** backend API and a highly responsive **React** frontend styled with **Tailwind CSS**. The platform securely tracks transactions, structures customized budget categories, offers smart OCR receipt scanning, and features a dedicated financial assistant chat powered by **Spring AI & Ollama** for automated transaction categorization and contextual advice.
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://ai-finance-manager-1-hipp.onrender.com/)
+[![Backend](https://img.shields.io/badge/Spring_Boot-3.3.4-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Frontend](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+
+> 🚀 **Live Demo:** [https://ai-finance-manager-1-hipp.onrender.com/](https://ai-finance-manager-1-hipp.onrender.com/)
+
+AI Finance Manager is a full-stack personal finance management application. It features a robust **Spring Boot** backend API and a highly responsive **React** frontend styled with **Tailwind CSS**. The platform securely tracks transactions, structures customized budget categories, offers smart OCR receipt scanning, and features a dedicated financial assistant chat powered by **Spring AI & LLMs** (Groq / Ollama) for automated transaction categorization and contextual financial insights.
+
+---
+
+## 🌐 Live Deployment Overview
+
+* **Frontend:** Hosted on **Render Static Sites** ([https://ai-finance-manager-1-hipp.onrender.com/](https://ai-finance-manager-1-hipp.onrender.com/))
+* **Backend API:** Hosted on **Render Web Services** with custom Docker container + Tesseract OCR engine
+* **Database:** Managed Cloud MySQL via **Aiven**
+* **Cloud AI:** High-speed inference via **Groq Cloud LPU** with Spring AI integration
 
 ---
 
