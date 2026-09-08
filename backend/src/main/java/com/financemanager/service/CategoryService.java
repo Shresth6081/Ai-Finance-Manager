@@ -14,11 +14,12 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public CategoryDTO createCategory(CategoryDTO dto, User user) {
         // Check for duplicate category name for this user and type
         if (categoryRepository.existsByNameAndUserAndType(dto.getName(), user, dto.getType())) {
@@ -49,7 +50,7 @@ public class CategoryService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public CategoryDTO updateCategory(Long id, CategoryDTO dto, User user) {
         Category category = categoryRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new IllegalArgumentException("Category not found"));
@@ -68,14 +69,14 @@ public class CategoryService {
         return mapToDTO(updated);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteCategory(Long id, User user) {
         Category category = categoryRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new IllegalArgumentException("Category not found"));
         categoryRepository.delete(category);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void initializeDefaultCategories(User user) {
         createDefaultCategoryIfAbsent("Salary",        TransactionType.INCOME,  "#22c55e", user);
         createDefaultCategoryIfAbsent("Freelance",     TransactionType.INCOME,  "#10b981", user);

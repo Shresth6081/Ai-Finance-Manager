@@ -28,8 +28,10 @@ public class TransactionService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         String category = dto.getCategory();
+        boolean needsAsyncCategorization = false;
         if (category == null || category.trim().isEmpty()) {
-            category = aiService.categorizeTransaction(dto.getDescription(), dto.getAmount().toString());
+            category = "Pending";
+            needsAsyncCategorization = true;
         }
 
         Transaction transaction = Transaction.builder()
@@ -42,6 +44,11 @@ public class TransactionService {
                 .build();
 
         Transaction savedTransaction = transactionRepository.save(transaction);
+
+        if (needsAsyncCategorization) {
+            aiService.categorizeTransactionAsync(savedTransaction.getId(), savedTransaction.getDescription(), savedTransaction.getAmount().toString());
+        }
+
         return mapToDTO(savedTransaction);
     }
 

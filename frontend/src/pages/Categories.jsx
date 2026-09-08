@@ -8,10 +8,7 @@ const Categories = () => {
     const [showModal, setShowModal] = useState(false);
     const [newCategory, setNewCategory] = useState({ name: '', type: 'EXPENSE', color: '#ef4444' });
     const [error, setError] = useState('');
-    // useRef so the flag is set synchronously — prevents React Strict Mode's
-    // double effect invocation from firing POST /initialize twice
     const initializingRef = React.useRef(false);
-
 
     // New state for viewing transactions by category
     const [selectedCategory, setSelectedCategory] = useState(null);
@@ -29,8 +26,6 @@ const Categories = () => {
             setCategories(response.data);
 
             if (response.data.length === 0 && !initializingRef.current) {
-                // Mark as initializing synchronously before any await so that
-                // a concurrent call (React Strict Mode) sees it immediately
                 initializingRef.current = true;
                 await api.post('/categories/initialize');
                 const updatedResponse = await api.get('/categories');
@@ -96,7 +91,7 @@ const Categories = () => {
     const expenseCategories = categories.filter(c => c.type === 'EXPENSE');
 
     if (loading) {
-        return <div className="flex justify-center items-center h-64">Loading categories...</div>;
+        return <div className="text-gray-600">Loading categories...</div>;
     }
 
     return (
@@ -113,7 +108,7 @@ const Categories = () => {
             </div>
 
             {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                     {error}
                 </div>
             )}
@@ -129,12 +124,12 @@ const Categories = () => {
                         {incomeCategories.map(category => (
                             <div
                                 key={category.id}
-                                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                                className="flex items-center justify-between p-3 bg-gray-50 border border-gray-100 hover:bg-gray-100 transition-colors rounded-lg cursor-pointer"
                                 onClick={() => handleCategoryClick(category)}
                             >
                                 <div className="flex items-center gap-3">
                                     <div className="w-4 h-4 rounded-full" style={{ backgroundColor: category.color }}></div>
-                                    <span className="font-medium">{category.name}</span>
+                                    <span className="font-medium text-gray-950">{category.name}</span>
                                 </div>
                                 <div className="flex gap-2">
                                     <button
@@ -142,7 +137,7 @@ const Categories = () => {
                                             e.stopPropagation();
                                             handleDeleteCategory(category.id);
                                         }}
-                                        className="text-red-600 hover:text-red-800 p-1"
+                                        className="text-red-600 hover:text-red-800 p-1 transition-colors"
                                     >
                                         <Trash2 size={16} />
                                     </button>
@@ -165,12 +160,12 @@ const Categories = () => {
                         {expenseCategories.map(category => (
                             <div
                                 key={category.id}
-                                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                                className="flex items-center justify-between p-3 bg-gray-50 border border-gray-100 hover:bg-gray-100 transition-colors rounded-lg cursor-pointer"
                                 onClick={() => handleCategoryClick(category)}
                             >
                                 <div className="flex items-center gap-3">
                                     <div className="w-4 h-4 rounded-full" style={{ backgroundColor: category.color }}></div>
-                                    <span className="font-medium">{category.name}</span>
+                                    <span className="font-medium text-gray-950">{category.name}</span>
                                 </div>
                                 <div className="flex gap-2">
                                     <button
@@ -178,7 +173,7 @@ const Categories = () => {
                                             e.stopPropagation();
                                             handleDeleteCategory(category.id);
                                         }}
-                                        className="text-red-600 hover:text-red-800 p-1"
+                                        className="text-red-600 hover:text-red-800 p-1 transition-colors"
                                     >
                                         <Trash2 size={16} />
                                     </button>
@@ -194,9 +189,9 @@ const Categories = () => {
 
             {/* Add Category Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                        <h3 className="text-xl font-bold mb-4">Add New Category</h3>
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl border border-gray-100">
+                        <h3 className="text-xl font-bold text-gray-800 mb-4">Add New Category</h3>
                         {error && (
                             <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded mb-4 text-sm">
                                 {error}
@@ -204,33 +199,33 @@ const Categories = () => {
                         )}
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Category Name</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Category Name</label>
                                 <input
                                     type="text"
                                     value={newCategory.name}
                                     onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-gray-900 bg-white"
                                     placeholder="e.g., Groceries"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Type</label>
                                 <select
                                     value={newCategory.type}
                                     onChange={(e) => setNewCategory({ ...newCategory, type: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-gray-900 bg-white"
                                 >
                                     <option value="EXPENSE">Expense</option>
                                     <option value="INCOME">Income</option>
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Color</label>
                                 <input
                                     type="color"
                                     value={newCategory.color}
                                     onChange={(e) => setNewCategory({ ...newCategory, color: e.target.value })}
-                                    className="w-full h-10 border border-gray-300 rounded-lg cursor-pointer"
+                                    className="w-full h-10 border border-gray-300 rounded-lg cursor-pointer p-1 bg-white"
                                 />
                             </div>
                         </div>
@@ -240,13 +235,13 @@ const Categories = () => {
                                     setShowModal(false);
                                     setError('');
                                 }}
-                                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                                className="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleAddCategory}
-                                className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                className="flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-700"
                             >
                                 Add Category
                             </button>
@@ -258,63 +253,69 @@ const Categories = () => {
             {/* View Transactions Modal */}
             {showTransactionsModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-bold">
+                    <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[80vh] flex flex-col overflow-hidden shadow-xl border border-gray-100">
+                        <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-200">
+                            <h3 className="text-xl font-bold text-gray-800">
                                 Transactions in "{selectedCategory?.name}"
                             </h3>
                             <button
                                 onClick={() => setShowTransactionsModal(false)}
-                                className="text-gray-500 hover:text-gray-700"
+                                className="text-gray-500 hover:text-gray-700 text-lg"
                             >
                                 ✕
                             </button>
                         </div>
 
-                        {loadingTransactions ? (
-                            <div className="text-center py-8">Loading transactions...</div>
-                        ) : categoryTransactions.length === 0 ? (
-                            <div className="text-center py-8 text-gray-500">
-                                No transactions found in this category
-                            </div>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {categoryTransactions.map((transaction) => (
-                                            <tr key={transaction.id}>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {transaction.date}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                    {transaction.description}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${transaction.type === 'INCOME' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                                        }`}>
-                                                        {transaction.type}
-                                                    </span>
-                                                </td>
-                                                <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold ${transaction.type === 'INCOME' ? 'text-green-600' : 'text-red-600'
-                                                    }`}>
-                                                    {transaction.type === 'INCOME' ? '+' : '-'}${transaction.amount}
-                                                </td>
+                        <div className="flex-1 overflow-y-auto min-h-0">
+                            {loadingTransactions ? (
+                                <div className="text-center py-8 text-gray-500 animate-pulse">Loading transactions...</div>
+                            ) : categoryTransactions.length === 0 ? (
+                                <div className="text-center py-8 text-gray-500">
+                                    No transactions found in this category
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto rounded-lg border border-gray-200">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Description</th>
+                                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
+                                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-200 bg-white">
+                                            {categoryTransactions.map((transaction) => (
+                                                <tr key={transaction.id} className="hover:bg-gray-50">
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
+                                                        {transaction.date}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-950">
+                                                        {transaction.description}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                        <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                                            transaction.type === 'INCOME' 
+                                                                ? 'bg-green-100 text-green-800' 
+                                                                : 'bg-red-100 text-red-800'
+                                                        }`}>
+                                                            {transaction.type}
+                                                        </span>
+                                                    </td>
+                                                    <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold font-mono ${
+                                                        transaction.type === 'INCOME' ? 'text-green-600' : 'text-red-600'
+                                                    }`}>
+                                                        {transaction.type === 'INCOME' ? '+' : '-'}${transaction.amount.toFixed(2)}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
 
-                        <div className="mt-6 flex justify-end">
+                        <div className="mt-6 flex justify-end pt-2 border-t border-gray-200">
                             <button
                                 onClick={() => setShowTransactionsModal(false)}
                                 className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"

@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Receipt, Tag, Settings, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Receipt, Tag, MessageSquare, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import clsx from 'clsx';
 
@@ -11,21 +11,21 @@ const Sidebar = ({ collapsed, onToggle }) => {
         { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
         { icon: Receipt, label: 'Transactions', path: '/transactions' },
         { icon: Tag, label: 'Categories', path: '/categories' },
-        { icon: Settings, label: 'Settings', path: '/settings' },
+        { icon: MessageSquare, label: 'AI Assistant', path: '/ai-chat' },
     ];
 
     return (
         <div
             className={clsx(
-                'bg-white h-screen shadow-lg flex flex-col fixed left-0 top-0 transition-all duration-300 ease-in-out overflow-hidden',
+                'bg-white h-screen shadow-lg flex flex-col fixed left-0 top-0 transition-all duration-300 ease-in-out overflow-hidden z-20 border-r border-gray-100',
                 collapsed ? 'w-16' : 'w-64'
             )}
         >
             {/* Header: logo + toggle button */}
-            <div className="p-4 border-b flex items-center justify-between min-h-[72px]">
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between min-h-[72px]">
                 {!collapsed && (
                     <h1 className="text-xl font-bold text-primary flex items-center gap-2 whitespace-nowrap">
-                        FinManager <span className="text-xs bg-primary text-white px-2 py-1 rounded-full">AI</span>
+                        FinManager <span className="text-xs bg-primary text-white px-2 py-0.5 rounded-full font-semibold">AI</span>
                     </h1>
                 )}
                 <button
@@ -64,7 +64,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
             </nav>
 
             {/* Logout */}
-            <div className="p-2 border-t">
+            <div className="p-2 border-t border-gray-100">
                 <button
                     onClick={logout}
                     title={collapsed ? 'Logout' : undefined}
@@ -74,7 +74,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
                     )}
                 >
                     <LogOut size={20} className="shrink-0" />
-                    {!collapsed && <span className="whitespace-nowrap">Logout</span>}
+                    {!collapsed && <span className="whitespace-nowrap font-medium">Logout</span>}
                 </button>
             </div>
         </div>

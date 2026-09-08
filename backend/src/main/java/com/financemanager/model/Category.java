@@ -15,16 +15,11 @@ import lombok.NoArgsConstructor;
 @Table(
     name = "categories",
     uniqueConstraints = {
-        // DB-level guarantee: no two rows can share the same name + user + type
-        @UniqueConstraint(name = "uq_category_name_user_type", columnNames = {"name", "user_id", "type"})
-    },
-    indexes = {
-        // Covers findByUser
-        @Index(name = "idx_category_user_id", columnList = "user_id"),
-        // Covers findByUserAndType — filters by both user and type
-        @Index(name = "idx_category_user_type", columnList = "user_id, type"),
-        // Covers existsByNameAndUserAndType — uniqueness check on every save
-        @Index(name = "idx_category_name_user_type", columnList = "name, user_id, type")
+        // Enforces uniqueness and acts as composite B-tree index covering:
+        // 1. findByUser (leftmost prefix: user_id)
+        // 2. findByUserAndType (prefix: user_id, type)
+        // 3. existsByNameAndUserAndType (full key: user_id, type, name)
+        @UniqueConstraint(name = "uq_category_user_type_name", columnNames = {"user_id", "type", "name"})
     }
 )
 public class Category {

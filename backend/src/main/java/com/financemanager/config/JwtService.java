@@ -73,8 +73,6 @@ public class JwtService {
         return extractClaim(token, Claims::getExpiration);
     }
 
-
-
     // while injecting the value of secret key into the environment variable,
     // you put the encoded key , therefore you are just decoding it here;
     private Key getSignInKey() {

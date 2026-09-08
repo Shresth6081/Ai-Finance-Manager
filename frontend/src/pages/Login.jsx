@@ -22,8 +22,8 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <div className="bg-white p-8 rounded-lg shadow-md w-96">
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 text-gray-900">
+            <div className="bg-white p-8 rounded-lg shadow-md w-96 border border-gray-100">
                 <h2 className="text-2xl font-bold mb-6 text-center text-primary">Login</h2>
                 {error && <p className="text-red-500 mb-4 text-sm text-center">{error}</p>}
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -33,7 +33,7 @@ const Login = () => {
                             type="text"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 border"
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 border text-gray-900 bg-white"
                             required
                         />
                     </div>
@@ -43,7 +43,7 @@ const Login = () => {
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 border"
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 border text-gray-900 bg-white font-mono"
                             required
                         />
                     </div>
@@ -56,7 +56,7 @@ const Login = () => {
                 </form>
                 <div className="mt-4 text-center">
                     <p className="text-sm text-gray-600">
-                        Don't have an account? <Link to="/register" className="text-primary hover:underline">Sign up</Link>
+                        Don't have an account? <Link to="/register" className="text-primary hover:underline font-semibold">Sign up</Link>
                     </p>
                 </div>
             </div>

@@ -4,7 +4,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import Categories from './pages/Categories';
-import Settings from './pages/Settings';
+import AIChat from './pages/AIChat';
 import Layout from './components/layout/Layout';
 import { AuthProvider } from './context/AuthContext';
 
@@ -21,7 +21,7 @@ function App() {
                         <Route path="dashboard" element={<Dashboard />} />
                         <Route path="transactions" element={<Transactions />} />
                         <Route path="categories" element={<Categories />} />
-                        <Route path="settings" element={<Settings />} />
+                        <Route path="ai-chat" element={<AIChat />} />
                     </Route>
                 </Routes>
             </BrowserRouter>

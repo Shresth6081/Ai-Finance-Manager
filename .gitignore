@@ -21,3 +21,6 @@ backend/*.class
 backend/.mvn/
 backend/.metadata/
 backend/src/main/java/com/financemanager/Helper/
+
+# --- Local Traces (Excluded) ---
+request_flow.md
