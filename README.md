@@ -1,5 +1,11 @@
 # AI Finance Manager
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://ai-finance-manager-1-hipp.onrender.com/)
+[![Backend](https://img.shields.io/badge/Spring_Boot-3.3.4-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Frontend](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+
+> 🚀 **Live Application:** [https://ai-finance-manager-1-hipp.onrender.com/](https://ai-finance-manager-1-hipp.onrender.com/)
+
 AI Finance Manager is a full-stack personal finance management application. It features a robust **Spring Boot** backend API and a highly responsive **React** frontend styled with **Tailwind CSS**. The platform securely tracks transactions, structures customized budget categories, offers smart OCR receipt scanning, and features a dedicated financial assistant chat powered by **Spring AI & Ollama** for automated transaction categorization and contextual advice.
 
 ---
