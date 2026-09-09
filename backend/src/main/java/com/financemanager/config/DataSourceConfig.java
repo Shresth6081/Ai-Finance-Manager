@@ -10,12 +10,19 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
 import javax.sql.DataSource;
-import java.net.URI;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Configuration
 public class DataSourceConfig {
 
     private static final Logger log = LoggerFactory.getLogger(DataSourceConfig.class);
+
+    // Regex to robustly parse (jdbc:)?mysql://[user[:pass]@]host[:port][/database][?query]
+    private static final Pattern DB_URL_PATTERN = Pattern.compile(
+            "^(?:jdbc:)?mysql://(?:([^:@/\\s]+)(?::([^@/\\s]+))?@)?([^:/\\s?#]+)(?::(\\d+))?(/[^?#\\s]*)?(?:\\?([^#\\s]*))?$",
+            Pattern.CASE_INSENSITIVE
+    );
 
     @Value("${spring.datasource.url:jdbc:mysql://localhost:3306/financemanager?createDatabaseIfNotExist=true}")
     private String rawUrl;
@@ -33,71 +40,76 @@ public class DataSourceConfig {
         String finalUser = username != null ? username.trim() : "";
         String finalPass = password != null ? password : "";
 
-        // Auto-sanitize mysql:// cloud URIs (e.g. Aiven, TiDB, Railway, Supabase) to jdbc:mysql:// format
-        try {
-            String uriStringToParse = finalUrl;
-            if (uriStringToParse.startsWith("jdbc:")) {
-                uriStringToParse = uriStringToParse.substring(5);
+        String host = "localhost";
+        int port = 3306;
+        String path = "/financemanager";
+        String query = "";
+
+        Matcher matcher = DB_URL_PATTERN.matcher(finalUrl);
+        if (matcher.matches()) {
+            String urlUser = matcher.group(1);
+            String urlPass = matcher.group(2);
+            String urlHost = matcher.group(3);
+            String urlPort = matcher.group(4);
+            String urlPath = matcher.group(5);
+            String urlQuery = matcher.group(6);
+
+            if (urlUser != null && !urlUser.isEmpty()) {
+                finalUser = urlUser;
             }
-
-            if (uriStringToParse.startsWith("mysql://")) {
-                URI uri = URI.create(uriStringToParse);
-                String host = uri.getHost();
-                int port = uri.getPort() != -1 ? uri.getPort() : 3306;
-                String path = (uri.getPath() != null && !uri.getPath().isEmpty() && !uri.getPath().equals("/"))
-                        ? uri.getPath()
-                        : "/defaultdb";
-                String query = uri.getQuery();
-
-                // Extract credentials from URI if provided in the URL
-                if (uri.getUserInfo() != null && !uri.getUserInfo().isEmpty()) {
-                    String[] userInfo = uri.getUserInfo().split(":", 2);
-                    if (finalUser.isEmpty() || finalUser.equals("root")) {
-                        finalUser = userInfo[0];
-                    }
-                    if (userInfo.length > 1 && finalPass.isEmpty()) {
-                        finalPass = userInfo[1];
-                    }
+            if (urlPass != null && !urlPass.isEmpty()) {
+                finalPass = urlPass;
+            }
+            if (urlHost != null && !urlHost.isEmpty()) {
+                host = urlHost;
+            }
+            if (urlPort != null && !urlPort.isEmpty()) {
+                try {
+                    port = Integer.parseInt(urlPort);
+                } catch (NumberFormatException ignored) {}
+            }
+            if (urlPath != null && !urlPath.isEmpty() && !urlPath.equals("/")) {
+                // If TiDB template pointed to system schema /sys, redirect to default user schema /test
+                if (urlPath.equalsIgnoreCase("/sys")) {
+                    path = "/test";
+                } else {
+                    path = urlPath;
                 }
-
-                // Convert CLI param ssl-mode= to JDBC param sslMode=
-                if (query != null) {
-                    query = query.replace("ssl-mode=", "sslMode=");
-                }
-
-                // Enforce SSL & public key retrieval for remote cloud hosts
-                if (host != null && !host.equals("localhost") && !host.equals("127.0.0.1")) {
-                    if (query == null || query.isEmpty()) {
-                        query = "sslMode=REQUIRED&allowPublicKeyRetrieval=true&autoReconnect=true";
-                    } else if (!query.contains("sslMode") && !query.contains("useSSL")) {
-                        query = query + "&sslMode=REQUIRED&allowPublicKeyRetrieval=true&autoReconnect=true";
-                    } else if (!query.contains("allowPublicKeyRetrieval")) {
-                        query = query + "&allowPublicKeyRetrieval=true";
-                    }
-                }
-
-                finalUrl = "jdbc:mysql://" + host + ":" + port + path + (query != null && !query.isEmpty() ? "?" + query : "");
             } else {
-                if (!finalUrl.startsWith("jdbc:")) {
-                    finalUrl = "jdbc:" + finalUrl;
-                }
-                // Convert CLI param ssl-mode= to JDBC param sslMode=
-                finalUrl = finalUrl.replace("ssl-mode=", "sslMode=");
-                if (!finalUrl.contains("localhost") && !finalUrl.contains("127.0.0.1")) {
-                    if (!finalUrl.contains("allowPublicKeyRetrieval")) {
-                        finalUrl = finalUrl + (finalUrl.contains("?") ? "&" : "?") + "allowPublicKeyRetrieval=true";
+                path = host.contains("tidbcloud.com") ? "/test" : "/defaultdb";
+            }
+            if (urlQuery != null && !urlQuery.isEmpty()) {
+                query = urlQuery.replace("ssl-mode=", "sslMode=");
+            }
+
+            // Remote cloud host SSL configuration
+            if (!host.equals("localhost") && !host.equals("127.0.0.1")) {
+                if (query.isEmpty()) {
+                    query = "sslMode=VERIFY_IDENTITY&allowPublicKeyRetrieval=true&autoReconnect=true";
+                } else {
+                    if (!query.contains("sslMode") && !query.contains("useSSL")) {
+                        query += "&sslMode=VERIFY_IDENTITY";
+                    }
+                    if (!query.contains("allowPublicKeyRetrieval")) {
+                        query += "&allowPublicKeyRetrieval=true";
+                    }
+                    if (!query.contains("autoReconnect")) {
+                        query += "&autoReconnect=true";
                     }
                 }
             }
-        } catch (Exception e) {
-            log.warn("Could not parse datasource URL as structured URI ({}), falling back to direct JDBC string", e.getMessage());
+
+            // Construct standard clean JDBC URL WITHOUT embedded credentials in the URL
+            finalUrl = "jdbc:mysql://" + host + ":" + port + path + (query.isEmpty() ? "" : "?" + query);
+        } else {
+            // Fallback for non-standard format
             if (!finalUrl.startsWith("jdbc:")) {
                 finalUrl = "jdbc:" + finalUrl;
             }
             finalUrl = finalUrl.replace("ssl-mode=", "sslMode=");
         }
 
-        log.info("Connecting to Database at URL: {} with user: {}", sanitizeUrlForLogging(finalUrl), finalUser);
+        log.info("Connecting to Database at clean JDBC URL: {} with user: {}", finalUrl, finalUser);
 
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(finalUrl);
@@ -116,10 +128,6 @@ public class DataSourceConfig {
 
         return new HikariDataSource(config);
     }
-
-    private String sanitizeUrlForLogging(String url) {
-        if (url == null) return "";
-        return url.replaceAll("(?i)(password|pass)=[^&]*", "$1=***");
-    }
 }
+
 
