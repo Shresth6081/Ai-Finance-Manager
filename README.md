@@ -1,12 +1,13 @@
-# AI Finance Manager
+# Finance Manager Agent
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://ai-finance-manager-1-hipp.onrender.com/)
 [![Backend](https://img.shields.io/badge/Spring_Boot-3.3.4-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![Frontend](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+[![LLM Inference](https://img.shields.io/badge/Groq_Cloud-Llama_3.3_70B-F55036?style=for-the-badge&logo=fastapi&logoColor=white)](https://groq.com/)
 
 > 🚀 **Live Demo:** [https://ai-finance-manager-1-hipp.onrender.com/](https://ai-finance-manager-1-hipp.onrender.com/)
 
-AI Finance Manager is a full-stack personal finance management application. It features a robust **Spring Boot** backend API and a highly responsive **React** frontend styled with **Tailwind CSS**. The platform securely tracks transactions, structures customized budget categories, offers smart OCR receipt scanning, and features a dedicated financial assistant chat powered by **Spring AI & LLMs** (Groq / Ollama) for automated transaction categorization and contextual financial insights.
+**Finance Manager Agent** (FinAgent) is an autonomous, full-stack personal finance management platform powered by **Agentic AI** and **Spring AI**. Rather than relying on simple, stateless prompt-and-answer bots that hallucinate numbers, FinAgent implements an autonomous **ReAct (Reasoning + Acting) Agent** that reasons iteratively over live database records, calls backend analytical tools, streams thoughts and tokens in real time via **Server-Sent Events (SSE)**, and enforces strict **Human-in-the-Loop (HITL)** governance for sensitive database modifications.
 
 ---
 
@@ -15,166 +16,186 @@ AI Finance Manager is a full-stack personal finance management application. It f
 * **Frontend:** Hosted on **Render Static Sites** ([https://ai-finance-manager-1-hipp.onrender.com/](https://ai-finance-manager-1-hipp.onrender.com/))
 * **Backend API:** Hosted on **Render Web Services** with custom Docker container + Tesseract OCR engine
 * **Database:** Managed Cloud MySQL via **Aiven**
-* **Cloud AI:** High-speed inference via **Groq Cloud LPU** with Spring AI integration
+* **Cloud AI Inference:** Ultra-low latency inference via **Groq Cloud LPU** (`llama-3.3-70b-versatile` / Spring AI)
 
 ---
 
-## Key Features
+## 🤖 Core Agentic AI Capabilities
 
-* **Dual-Engine Architecture:** Clean separation of client UI (`frontend`) and business logic API (`backend`) hosted within a synchronized monorepo.
-* **Intelligent Asynchronous Categorization:** Transactions save instantly in a pulsing `"Pending"` state, dispatching categorization tasks to an asynchronous background worker thread so the UI never freezes. The frontend reactively polls the server until Ollama finishes.
-* **Dedicated AI Chat Assistant:** Accessible from the sidebar, the assistant uses Spring AI to retrieve contextual prompt logs (feeding the most recent 15 transactions) to serve customized advice, budget analysis, and general chat.
-* **AI Receipt OCR Scanner:** Users can click **Scan Receipt** and upload receipt photos (PNG, JPG, JPEG). The backend runs Tesseract OCR locally to extract raw text, and Spring AI maps the unstructured text into a clean transaction form (description, amount, date, and suggested category) automatically.
-* **Stateful Security & RBAC:** Complete authentication flow secured by **JSON Web Tokens (JWT)**, featuring route guards on the frontend and method-level access controls on the backend.
-* **Actuator Monitoring & Fail-Fast Health Checks:** Native monitoring via **Spring Boot Actuator** combined with a custom Ollama health check circuit breaker that blocks slow LLM requests instantly if the model server is offline.
-* **Relational Schema Mapping:** Optimized MySQL database integration utilizing Hibernate/JPA object-relational mapping with automatic schema generation (`update`).
+### 1. Autonomous ReAct Reasoning Engine
+FinAgent executes an iterative **Reasoning + Acting** loop (up to 4 iterations) with strict protocol tags:
+* `THOUGHT:` Internal step-by-step reasoning explaining what data is required.
+* `ACTION:` Explicit tool invocation selecting from 5 live database tools.
+* `ACTION_INPUT:` JSON parameters passed to the tool.
+* `OBSERVATION:` Actual SQL data and financial calculations returned from the database.
+* `FINAL_ANSWER:` Complete markdown-formatted financial advice, tables, and metrics.
+
+### 2. Live Database Financial Tools
+The agent has direct access to 5 backend analytical tools:
+1. **`getMonthlySpendingByCategory`**: Calculates exact category spending totals, income vs. expenses, and net savings rate for any month/year.
+2. **`getHistoricalTrends`**: Computes month-over-month income, expense, and savings trends over recent months.
+3. **`getRecurringTransactions`**: Identifies subscription charges, recurring vendors, and flags price hikes (e.g., Netflix price increases).
+4. **`getBudgetVsActualReport`**: Evaluates user spending against standard 50/30/20 budget benchmarks (Needs, Wants, Savings).
+5. **`simulateSavingsTrajectory`**: Projects compound interest milestones and wealth trajectory based on current balance, deposits, and target timeline.
+
+### 3. Real-Time Server-Sent Events (SSE) Streaming
+Instead of freezing the UI during multi-step reasoning:
+* Custom `ReadableStream` and `TextDecoder` pipeline in React.
+* Streams live reasoning steps into a collapsible **Thought Trace Accordion**.
+* Real-time tool badges display which tool is running and when it completes.
+* Typewriter text animation streams tokens smoothly at 15ms intervals.
+
+### 4. Human-in-the-Loop (HITL) Action Governance
+To prevent unauthorized or hallucinated writes:
+* The agent is **strictly read-only** during autonomous loops.
+* If the user asks to add an expense, bulk re-categorize, or adjust a budget, the agent outputs a `PROPOSAL: {...}`.
+* The frontend renders an interactive **Action Proposal Card** with **Approve** and **Dismiss** buttons.
+* Database mutations (`CREATE_TRANSACTION`, `BULK_RECATEGORIZE`, `CREATE_CATEGORY`, `REALLOCATE_BUDGET`) only execute inside `@Transactional` blocks upon the user's explicit approval click.
+
+### 5. Proactive Anomaly Hunter Agent (`ScheduledAgentHunterService`)
+* An autonomous background service runs scheduled scans across user transactions.
+* Detects vendor price increases and spending spikes without user prompting.
+* Generates proactive `AgentAlert` records that display in alert banners across the dashboard.
+
+### 6. AI Receipt OCR Scanner
+* Upload receipt images (PNG, JPG, JPEG).
+* The backend runs **Tesseract OCR** via Tess4J to extract raw text.
+* Spring AI parses unstructured text into structured transaction fields (merchant, amount, date, category) automatically.
 
 ---
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 ### Backend
-* **Language/Framework:** Java 17, Spring Boot 3.3.x
-* **Security:** Spring Security, JWT (Json Web Token)
-* **Data Access:** Spring Data JPA, Hibernate
-* **Database:** MySQL 8.x
-* **AI Orchestration:** Spring AI (Ollama Starter Integration)
-* **OCR Integration:** Tesseract OCR (Tess4J JNA Wrapper)
-* **Observability:** Spring Boot Actuator
+* **Language & Framework:** Java 17, Spring Boot 3.3.4
+* **AI Orchestration:** Spring AI 1.0.0-M1, Groq Cloud API (`llama-3.3-70b-versatile`)
+* **Streaming Protocol:** W3C Server-Sent Events (`SseEmitter`, `MediaType.TEXT_EVENT_STREAM_VALUE`)
+* **Security:** Spring Security, JWT (JSON Web Tokens)
+* **Data Access & ORM:** Spring Data JPA, Hibernate, MySQL 8.x / Aiven Cloud / TiDB
+* **OCR Engine:** Tesseract OCR (Tess4J JNA Native Wrapper)
+* **Monitoring:** Spring Boot Actuator
 
 ### Frontend
-* **Framework/Bundler:** React.js, Vite
-* **Styling:** Tailwind CSS, PostCSS
-* **Routing/State:** React Router DOM, React Context API (Auth Provider)
-* **Visualization:** ChartJS
+* **Framework & Bundler:** React 18, Vite
+* **Styling:** Tailwind CSS, PostCSS, Lucide React Icons
+* **Data Visualization:** Chart.js, React-Chartjs-2
+* **Routing & State:** React Router DOM, React Context API (`AuthContext`)
+* **Streaming Client:** Fetch API `ReadableStream` + `TextDecoder` (SSE reader)
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
 ```text
 finance_manager_final/
-├── backend/                                  # Spring Boot Maven Project
+├── backend/                                  # Spring Boot Application
 │   ├── src/main/java/com/financemanager/
-│   │   ├── config/                           # Security, JWT & Web Routing Configuration
-│   │   │   ├── ApplicationConfig.java
+│   │   ├── config/                           # Security, JWT, Tool Beans & Seeder
+│   │   │   ├── AgentToolsConfig.java         # Spring AI Function Beans (5 tools)
+│   │   │   ├── DataSeeder.java               # Automatic default categories & demo ledger
+│   │   │   ├── DataSourceConfig.java         # Cloud DB URI parsing & SSL configuration
 │   │   │   ├── JwtAuthenticationFilter.java
 │   │   │   ├── JwtService.java
-│   │   │   ├── SecurityConfig.java
-│   │   │   └── OllamaHealthIndicator.java    # Custom Actuator endpoint checking Ollama status
-│   │   ├── controller/                       # REST Endpoints (Communicates with React frontend)
-│   │   │   ├── AIController.java             # Handles prompt chat prompts with transaction context
-│   │   │   ├── AuthenticationController.java  # Handles login and registration routing
-│   │   │   ├── CategoryController.java
-│   │   │   ├── ReceiptController.java        # Handles receipt upload & Tesseract OCR scanning
-│   │   │   └── TransactionController.java
-│   │   ├── dto/                              # Data Transfer Objects
-│   │   │   ├── AuthenticationRequest.java
-│   │   │   ├── AuthenticationResponse.java
-│   │   │   ├── CategoryDTO.java
-│   │   │   ├── RegisterRequest.java
-│   │   │   └── TransactionDTO.java
-│   │   ├── model/                            # Database Entities (Maps directly to MySQL tables)
-│   │   │   ├── Category.java
-│   │   │   ├── Transaction.java
-│   │   │   ├── TransactionType.java          # Enum class tracking INCOME / EXPENSE variations
-│   │   │   └── User.java                     # Implements UserDetails for system authentication
-│   │   ├── repository/                       # Database Queries via Spring Data JPA
+│   │   │   └── SecurityConfig.java
+│   │   ├── controller/                       # REST & Streaming Endpoints
+│   │   │   ├── AgentController.java          # SSE /stream, /chat, /execute-action, /alerts
+│   │   │   ├── AuthenticationController.java # Auth & registration
+│   │   │   ├── CategoryController.java       # Category CRUD
+│   │   │   ├── ReceiptController.java        # OCR scanning & AI receipt parsing
+│   │   │   └── TransactionController.java   # Transaction CRUD & async categorization
+│   │   ├── dto/                              # Transfer Objects & Event Payloads
+│   │   │   ├── AgentActionProposal.java      # HITL action proposal schema
+│   │   │   ├── AgentAlertDTO.java            # Proactive alert payload
+│   │   │   ├── AgentChatRequest.java         # User chat prompt & history
+│   │   │   └── AgentStreamEvent.java         # SSE event model (thought, tool_call, token, etc.)
+│   │   ├── model/                            # JPA Entities (MySQL)
+│   │   │   ├── AgentAlert.java               # Anomaly alert entity
+│   │   │   ├── Category.java                 # User categories
+│   │   │   ├── Transaction.java              # Ledger entries
+│   │   │   └── User.java                     # User credentials & Spring Security principal
+│   │   ├── repository/                       # Spring Data JPA Repositories
+│   │   │   ├── AgentAlertRepository.java
 │   │   │   ├── CategoryRepository.java
-│   │   │   └── TransactionRepository.java
-│   │   ├── service/                          # Business Logic Layer (Interacts with database/LLM)
-│   │   │   ├── AiService.java                # Spring AI & async transaction categorization
-│   │   │   ├── AuthenticationService.java    
-│   │   │   ├── CategoryService.java
-│   │   │   └── TransactionService.java
-│   │   └── FinanceManagerApplication.java    # The Main Spring Boot Entry Point
+│   │   │   ├── TransactionRepository.java
+│   │   │   └── UserRepository.java
+│   │   └── service/                          # Business Logic & Agent Execution
+│   │       ├── agent/
+│   │       │   ├── AgentOrchestratorService.java   # ReAct reasoning loop & prompt compiler
+│   │       │   ├── FinancialToolService.java       # 5 DB tools & transactional action runner
+│   │       │   └── ScheduledAgentHunterService.java # Background anomaly hunter cron
+│   │       ├── AIService.java                # Fast transaction categorization
+│   │       ├── AuthenticationService.java
+│   │       ├── CategoryService.java
+│   │       └── TransactionService.java
 │   └── src/main/resources/
-│       └── application.properties            # Contains database configurations & credentials
+│       └── application.properties            # Groq API configuration & DB properties
 │
-├── frontend/                                 # React Vite Project
+├── frontend/                                 # React + Vite Application
 │   ├── src/
-│   │   ├── components/                       # Shared layout systems
-│   │   │   ├── layout/
-│   │   │   │   ├── Layout.jsx                # Main interface container wrapper
-│   │   │   │   └── Sidebar.jsx               # Left navigation bar layout (AI assistant workspace link)
-│   │   ├── context/                          # State management providers
-│   │   │   └── AuthContext.jsx               # Tracks user authentication state and JWT storage
-│   │   ├── pages/                            # Full-view UI components (Routes)
-│   │   │   ├── AIChat.jsx                    # Dedicated full-screen AI chat workspace
-│   │   │   ├── Categories.jsx
-│   │   │   ├── Dashboard.jsx                 # Financial chart dashboards (Chart.js implementation)
+│   │   ├── components/layout/
+│   │   │   ├── Layout.jsx                    # Main shell container
+│   │   │   └── Sidebar.jsx                   # Collapsible navigation sidebar
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx               # JWT state & persistent auth session
+│   │   ├── pages/
+│   │   │   ├── AIChat.jsx                    # ReAct SSE Chat, live thoughts & Action Cards
+│   │   │   ├── Categories.jsx                # Category manager & transaction viewer
+│   │   │   ├── Dashboard.jsx                 # KPI summaries, hunter alert banner & Chart.js
 │   │   │   ├── Login.jsx
 │   │   │   ├── Register.jsx
-│   │   │   └── Transactions.jsx              # Ledger view with smart polling & Scan button
-│   │   ├── services/                         # API communication layers
-│   │   │   └── api.js                        # Axios wrappers for endpoint fetches
-│   │   ├── App.css
-│   │   ├── App.jsx                           # Core Router initialization mapping
-│   │   ├── index.css                         # Application-wide global styling rules (Tailwind imports)
-│   │   └── main.jsx                          # Frontend baseline mount point
-│   └── tailwind.config.js                    # Design Tokens & Layout Utility definitions
+│   │   │   └── Transactions.jsx              # Ledger view, filter, & OCR Scan modal
+│   │   ├── services/
+│   │   │   └── api.js                        # Axios instance with JWT interceptors
+│   │   ├── App.jsx                           # Route configuration
+│   │   └── main.jsx
+│   ├── tailwind.config.js
+│   └── vercel.json                           # SPA client-side rewrite rules
 ```
 
 ---
 
 ## ⚙️ Environment Configuration
 
-To keep production environments secure, database credentials and security signatures are decoupled from the codebase using system environment variables.
+Ensure the following variables are configured in your local environment or production host (e.g. Render / Docker):
 
-### Required Environment Variables
-
-Ensure the following variables are configured on your hosting machine or local terminal environment before launching the application:
-
-* **DB_USERNAME:** Database administrative username (e.g., root)
-* **DB_PASSWORD:** Database administrative password
-* **SECRET_KEY:** Cryptographic hash used for signing and validating JWTs
+| Variable | Description | Example |
+| :--- | :--- | :--- |
+| `DB_URL` | JDBC MySQL connection URL | `jdbc:mysql://localhost:3306/financemanager?createDatabaseIfNotExist=true` |
+| `DB_USERNAME` | Database username | `root` |
+| `DB_PASSWORD` | Database password | `your_secret_password` |
+| `SECRET_KEY` | HMAC SHA-256 JWT secret key | `404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970` |
+| `GROK_API_KEY` | Groq Cloud API Key | `gsk_...` |
 
 ---
 
-## Getting Started (Local Setup)
+## 🚀 Local Development Setup
 
 ### Prerequisites
+* **Java 17+**
+* **Node.js (v18+)** & **npm**
+* **MySQL Server**
+* **Tesseract OCR** binary package installed:
+  * Windows: [UB Mannheim Tesseract Installer](https://github.com/UB-Mannheim/tesseract/wiki) (default directory: `C:\Program Files\Tesseract-OCR`)
+  * Ubuntu / Debian: `sudo apt-get install tesseract-ocr`
 
-* Java Development Kit (JDK) 17 or higher
-* Node.js (v18+) & npm
-* MySQL Server
-* **Ollama** installed locally with the active model pulled (e.g. `llama3` or `qwen2:1.5b`)
-* **Tesseract OCR** binary package installed on the system (default Windows directory: `C:\Program Files\Tesseract-OCR`)
-
-### 1. Tesseract Installation (Windows)
-1. Download the Windows binary installer from [UB Mannheim Tesseract OCR](https://github.com/UB-Mannheim/tesseract/wiki).
-2. Install to the default directory (`C:\Program Files\Tesseract-OCR`).
-3. Ensure that the `tessdata` folder contains `eng.traineddata`.
-
-### 2. Database Setup
-Ensure your MySQL server is active, then create the database:
+### 1. Database Initialization
+Start your MySQL server and create the database:
 ```sql
 CREATE DATABASE financemanager;
 ```
 
-### 3. Backend Initialization
-Navigate to the backend folder:
+### 2. Backend Setup
 ```bash
 cd backend
-```
-Configure your environment variables, then run the Spring Boot application using Maven:
-```bash
+# Set your environment variables (or update application.properties for local testing)
 ./mvnw spring-boot:run
 ```
-The backend will start hosting endpoints at `http://localhost:8085`.
+The API server will launch at `http://localhost:8085`.
 
-### 4. Frontend Initialization
-Navigate to the frontend folder:
+### 3. Frontend Setup
 ```bash
 cd ../frontend
-```
-Install the necessary node modules and dependencies:
-```bash
 npm install
-```
-Boot up the Vite local development server:
-```bash
 npm run dev
 ```
-Open your browser and navigate to the local development URL (typically `http://localhost:5173`).
-
+Open your browser at `http://localhost:5173`.
