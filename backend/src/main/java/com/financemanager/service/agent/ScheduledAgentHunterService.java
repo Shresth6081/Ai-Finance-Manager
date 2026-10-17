@@ -26,9 +26,6 @@ public class ScheduledAgentHunterService {
     private final FinancialToolService toolService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    /**
-     * Runs every 6 hours and also 15 seconds after app startup.
-     */
     @Scheduled(initialDelay = 15000, fixedRate = 6 * 60 * 60 * 1000)
     @Transactional
     public void runAutonomousHunterScan() {

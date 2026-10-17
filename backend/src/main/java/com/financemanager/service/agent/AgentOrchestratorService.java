@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.financemanager.dto.AgentActionProposal;
 import com.financemanager.dto.AgentChatRequest;
 import com.financemanager.dto.AgentStreamEvent;
+import com.financemanager.model.Category;
 import com.financemanager.model.User;
+import com.financemanager.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatModel;
@@ -18,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -26,6 +29,7 @@ public class AgentOrchestratorService {
 
     private final ChatModel chatModel;
     private final FinancialToolService toolService;
+    private final CategoryRepository categoryRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final int MAX_ITERATIONS = 4;
@@ -33,9 +37,6 @@ public class AgentOrchestratorService {
     private static final Pattern ACTION_PATTERN = Pattern.compile("(?i)ACTION:\\s*([a-zA-Z0-9_]+)", Pattern.DOTALL);
     private static final Pattern FINAL_ANSWER_PATTERN = Pattern.compile("(?i)FINAL_ANSWER:\\s*(.*)", Pattern.DOTALL);
 
-    /**
-     * Executes the ReAct reasoning agent with SSE event streaming.
-     */
     public String executeReActLoop(User user, String prompt, List<AgentChatRequest.ChatMessage> history, Consumer<AgentStreamEvent> emitter) {
         Long userId = user.getId();
         String username = user.getUsername();
@@ -43,9 +44,16 @@ public class AgentOrchestratorService {
 
         emitter.accept(AgentStreamEvent.thought("Analyzing user request and identifying required financial tools..."));
 
+        List<Category> userCategories = categoryRepository.findByUser(user);
+        String categorySummary = userCategories.stream()
+                .map(Category::getName)
+                .distinct()
+                .collect(Collectors.joining(", "));
+
         StringBuilder contextBuilder = new StringBuilder();
         contextBuilder.append("System Date: ").append(today.toString()).append("\n");
-        contextBuilder.append("User: ").append(username).append(" (User ID: ").append(userId).append(")\n\n");
+        contextBuilder.append("User: ").append(username).append(" (User ID: ").append(userId).append(")\n");
+        contextBuilder.append("User's Existing Categories: [").append(categorySummary.isEmpty() ? "None" : categorySummary).append("]\n\n");
 
         if (history != null && !history.isEmpty()) {
             contextBuilder.append("Conversation History:\n");
@@ -85,7 +93,7 @@ public class AgentOrchestratorService {
 
             // Extract Proposal with balanced brace parser
             String proposalJson = extractBalancedJson(modelOutput, "PROPOSAL:");
-            if (proposalJson != null) {
+            if (proposalJson != null && !proposalJson.contains("...") && proposalJson.contains("\"")) {
                 try {
                     Map<String, Object> map = objectMapper.readValue(proposalJson, new TypeReference<>() {});
                     AgentActionProposal proposal = AgentActionProposal.builder()
@@ -117,7 +125,9 @@ public class AgentOrchestratorService {
             if (actionMatcher.find()) {
                 String toolName = actionMatcher.group(1).trim();
                 String inputJson = extractBalancedJson(modelOutput, "ACTION_INPUT:");
-                if (inputJson == null) inputJson = "{}";
+                if (inputJson == null || inputJson.contains("...") || !inputJson.contains("{")) {
+                    inputJson = "{}";
+                }
 
                 emitter.accept(AgentStreamEvent.toolCall(toolName, inputJson, "Running tool: " + toolName));
 
@@ -148,9 +158,6 @@ public class AgentOrchestratorService {
         return finalAns;
     }
 
-    /**
-     * Extracts a complete, balanced JSON string (object {...} or array [...]) after a given keyword.
-     */
     private String extractBalancedJson(String text, String prefix) {
         if (text == null) return null;
         int idx = text.toUpperCase().indexOf(prefix.toUpperCase());
@@ -212,6 +219,9 @@ public class AgentOrchestratorService {
 
     private String executeTool(Long userId, String toolName, String inputJson) {
         try {
+            if (inputJson == null || inputJson.isBlank() || inputJson.contains("...") || !inputJson.contains("{")) {
+                inputJson = "{}";
+            }
             Map<String, Object> params = objectMapper.readValue(inputJson, new TypeReference<>() {});
 
             switch (toolName) {
@@ -301,6 +311,9 @@ public class AgentOrchestratorService {
 
                 If you want to propose an action (e.g., creating a transaction, reallocating a budget) that modifies user data, output:
                 PROPOSAL: {"actionType": "CREATE_TRANSACTION"|"REALLOCATE_BUDGET"|"BULK_RECATEGORIZE", "title": "Action Title", "description": "Details", "parameters": {"amount": 75.00, "description": "Olive Garden", "category": "Dining", "type": "EXPENSE"}}
+
+                CATEGORY MATCHING RULE:
+                When proposing a CREATE_TRANSACTION action, you MUST map the transaction to one of the user's existing categories provided in the context (e.g. choose "Dining" for restaurants/meals, "Groceries" for supermarket shopping, "Transport" for rides/gas, "Utilities" for bills). Never invent a new category name if an existing category fits!
 
                 When you have gathered all necessary information and are ready to provide the complete answer to the user, output:
                 FINAL_ANSWER: <Your complete, helpful, markdown-formatted response with bold numbers, bullet points, and tables if useful.>

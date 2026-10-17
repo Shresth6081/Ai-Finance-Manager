@@ -32,6 +32,12 @@ public class AgentToolsConfig {
             @JsonProperty(required = true) @JsonPropertyDescription("User ID to query") Long userId
     ) {}
 
+    public record BudgetReportRequest(
+            @JsonProperty(required = true) @JsonPropertyDescription("User ID to query") Long userId,
+            @JsonPropertyDescription("Month number (1-12)") Integer month,
+            @JsonPropertyDescription("Year (e.g. 2026)") Integer year
+    ) {}
+
     public record SimulationRequest(
             @JsonPropertyDescription("Current starting balance") Double currentBalance,
             @JsonPropertyDescription("Monthly deposit or savings rate") Double monthlySavingsRate,
@@ -55,6 +61,12 @@ public class AgentToolsConfig {
     @Description("Detect recurring charges, subscriptions, and identify price increases")
     public Function<RecurringRequest, Map<String, Object>> getRecurringTransactions() {
         return req -> toolService.getRecurringTransactions(req.userId());
+    }
+
+    @Bean
+    @Description("Compare user spending against 50/30/20 budget benchmarks and analyze category limits")
+    public Function<BudgetReportRequest, Map<String, Object>> getBudgetVsActualReport() {
+        return req -> toolService.getBudgetVsActualReport(req.userId(), req.month(), req.year());
     }
 
     @Bean

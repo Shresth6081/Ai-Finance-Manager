@@ -30,9 +30,6 @@ public class FinancialToolService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
 
-    /**
-     * Tool 1: Get spending breakdown by category for a given month and year.
-     */
     public Map<String, Object> getMonthlySpendingByCategory(Long userId, Integer month, Integer year) {
         LocalDate now = LocalDate.now();
         int targetYear = (year != null && year > 2000) ? year : now.getYear();
@@ -96,9 +93,6 @@ public class FinancialToolService {
         return result;
     }
 
-    /**
-     * Tool 2: Get historical income, expense, and savings trends over recent months.
-     */
     public Map<String, Object> getHistoricalTrends(Long userId, Integer monthsCount) {
         int count = (monthsCount != null && monthsCount >= 1 && monthsCount <= 24) ? monthsCount : 6;
         LocalDate now = LocalDate.now();
@@ -161,9 +155,6 @@ public class FinancialToolService {
         return response;
     }
 
-    /**
-     * Tool 3: Detect recurring charges, subscriptions, and potential price hikes.
-     */
     public Map<String, Object> getRecurringTransactions(Long userId) {
         LocalDate startDate = LocalDate.now().minusMonths(6);
         List<Transaction> transactions = transactionRepository.findByUserIdAndDateBetween(userId, startDate, LocalDate.now());
@@ -213,9 +204,6 @@ public class FinancialToolService {
         return result;
     }
 
-    /**
-     * Tool 4: Budget vs Actual analysis with 50/30/20 heuristic evaluation.
-     */
     public Map<String, Object> getBudgetVsActualReport(Long userId, Integer month, Integer year) {
         Map<String, Object> spendData = getMonthlySpendingByCategory(userId, month, year);
         BigDecimal totalIncome = (BigDecimal) spendData.get("totalIncome");
@@ -240,9 +228,6 @@ public class FinancialToolService {
         return report;
     }
 
-    /**
-     * Tool 5: Math & Wealth Forecasting Simulation.
-     */
     public Map<String, Object> simulateSavingsTrajectory(Double currentBalance, Double monthlySavingsRate, Integer targetMonths, Double annualReturnPct) {
         double balance = (currentBalance != null && currentBalance >= 0) ? currentBalance : 0.0;
         double monthlyDeposit = (monthlySavingsRate != null) ? monthlySavingsRate : 0.0;
@@ -281,9 +266,6 @@ public class FinancialToolService {
         return simulation;
     }
 
-    /**
-     * Action Execution: Execute an approved AgentActionProposal safely.
-     */
     @Transactional
     public Map<String, Object> executeActionProposal(Long userId, AgentActionProposal proposal) {
         User user = userRepository.findById(userId)
@@ -347,7 +329,14 @@ public class FinancialToolService {
                     description = "New Expense";
                 }
 
-                String category = (String) params.getOrDefault("category", "General");
+                String rawCategory = (String) params.getOrDefault("category", "General");
+                List<Category> userCategories = categoryRepository.findByUser(user);
+                String category = userCategories.stream()
+                        .filter(c -> c.getName().equalsIgnoreCase(rawCategory.trim()))
+                        .map(Category::getName)
+                        .findFirst()
+                        .orElse(rawCategory.trim());
+
                 String typeStr = (String) params.getOrDefault("type", "EXPENSE");
                 TransactionType type = TransactionType.valueOf(typeStr.toUpperCase());
                 String dateStr = (String) params.getOrDefault("date", LocalDate.now().toString());
