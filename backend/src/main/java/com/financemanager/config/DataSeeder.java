@@ -32,16 +32,16 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        log.info("Checking data seeder for test user 'shresth'...");
+        log.info("Checking data seeder for test user 'AlexJacob'...");
 
-        User user = userRepository.findByUsername("shresth").orElseGet(() -> {
-            log.info("Creating default test user 'shresth' (password: 1234)...");
+        User user = userRepository.findByUsername("AlexJacob").orElseGet(() -> {
+            log.info("Creating default test user 'AlexJacob' (password: 1234)...");
             User newUser = User.builder()
-                    .username("shresth")
+                    .username("AlexJacob")
                     .password(passwordEncoder.encode("1234"))
-                    .firstName("Shresth")
-                    .lastName("Developer")
-                    .email("shresth@example.com")
+                    .firstName("Alex")
+                    .lastName("Jacob")
+                    .email("alex.jacob@example.com")
                     .build();
             return userRepository.save(newUser);
         });
@@ -88,11 +88,11 @@ public class DataSeeder implements CommandLineRunner {
     private void seedThreeMonthsTransactionsIfMissing(User user) {
         List<Transaction> existing = transactionRepository.findAllByUserId(user.getId());
         if (!existing.isEmpty()) {
-            log.info("User 'shresth' already has {} transactions. Skipping seeder.", existing.size());
+            log.info("User 'AlexJacob' already has {} transactions. Skipping seeder.", existing.size());
             return;
         }
 
-        log.info("Seeding 3 months of realistic mock transaction data for user 'shresth'...");
+        log.info("Seeding 3 months of realistic mock transaction data for user 'AlexJacob'...");
         List<Transaction> seedList = new ArrayList<>();
         LocalDate today = LocalDate.now();
         Random random = new Random(42);
@@ -255,7 +255,7 @@ public class DataSeeder implements CommandLineRunner {
         }
 
         transactionRepository.saveAll(seedList);
-        log.info("Successfully seeded {} mock transactions spanning 3 months for 'shresth'!", seedList.size());
+        log.info("Successfully seeded {} mock transactions spanning 3 months for 'AlexJacob'!", seedList.size());
     }
 
     private record CategorySeed(String name, TransactionType type, String color) {}
