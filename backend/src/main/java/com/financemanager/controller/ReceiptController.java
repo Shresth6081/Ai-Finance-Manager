@@ -1,6 +1,5 @@
 package com.financemanager.controller;
 
-import com.financemanager.config.OllamaHealthIndicator;
 import lombok.RequiredArgsConstructor;
 import net.sourceforge.tess4j.Tesseract;
 import org.springframework.ai.chat.model.ChatModel;
@@ -14,30 +13,27 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.imageio.ImageIO;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.InputStream;
 
 @RestController
 @RequestMapping("/api/v1/receipts")
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class ReceiptController {
 
     private final ChatModel chatModel;
-    private final OllamaHealthIndicator ollamaHealthIndicator;
 
     @Value("${tesseract.datapath:C:/Program Files/Tesseract-OCR/tessdata}")
     private String tesseractDataPath;
 
     @PostMapping("/scan")
     public ResponseEntity<String> scanReceipt(@RequestParam("file") MultipartFile file) {
-        // 1. Verify if AI Model Server is active
-        if (ollamaHealthIndicator != null && !ollamaHealthIndicator.isUp()) {
-            throw new ResponseStatusException(
-                    HttpStatus.SERVICE_UNAVAILABLE,
-                    "AI model server is offline. Please make sure Ollama is running to scan receipts."
-            );
-        }
-
-        // 2. Validate input file
+        // 1. Validate input file
         if (file.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File is empty.");
         }
@@ -57,15 +53,18 @@ public class ReceiptController {
 
         File tempFile = null;
         try {
-            // 3. Save file temporarily
-            tempFile = File.createTempFile("receipt-", "-" + fileName);
-            file.transferTo(tempFile);
+            // 2. Preprocess & save file temporarily (downscale large images to avoid OOM)
+            tempFile = preprocessAndSaveImage(file, fileName);
+
+            // 3. Resolve tessdata datapath dynamically
+            String datapath = resolveTessDataPath();
+            System.out.println("Using Tesseract datapath: " + datapath);
 
             // 4. Run Tesseract OCR
             Tesseract tesseract = new Tesseract();
-            tesseract.setDatapath(tesseractDataPath);
+            tesseract.setDatapath(datapath);
             tesseract.setLanguage("eng");
-            
+
             System.out.println("Running Tesseract OCR on file: " + fileName);
             String rawText = tesseract.doOCR(tempFile);
             System.out.println("OCR Completed. Extracted text length: " + (rawText != null ? rawText.length() : 0));
@@ -112,17 +111,100 @@ public class ReceiptController {
 
             return ResponseEntity.ok(cleanJsonResponse);
 
-        } catch (Exception e) {
-            System.err.println("OCR scan failed: " + e.getMessage());
-            e.printStackTrace();
+        } catch (ResponseStatusException rse) {
+            throw rse;
+        } catch (Throwable t) {
+            System.err.println("OCR scan failed: " + t.getMessage());
+            t.printStackTrace();
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Failed to process receipt image: " + e.getMessage()
+                    "Failed to process receipt image: " + t.getMessage()
             );
         } finally {
             if (tempFile != null && tempFile.exists()) {
                 tempFile.delete();
             }
         }
+    }
+
+    private File preprocessAndSaveImage(MultipartFile file, String fileName) throws Exception {
+        File tempFile = File.createTempFile("receipt-", "-" + fileName);
+        try (InputStream is = file.getInputStream()) {
+            BufferedImage originalImage = ImageIO.read(is);
+            if (originalImage == null) {
+                file.transferTo(tempFile);
+                return tempFile;
+            }
+
+            int originalWidth = originalImage.getWidth();
+            int originalHeight = originalImage.getHeight();
+            int maxDimension = 1500;
+
+            if (originalWidth > maxDimension || originalHeight > maxDimension) {
+                double scale = Math.min((double) maxDimension / originalWidth, (double) maxDimension / originalHeight);
+                int targetWidth = (int) Math.round(originalWidth * scale);
+                int targetHeight = (int) Math.round(originalHeight * scale);
+
+                BufferedImage resizedImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
+                Graphics2D g2d = resizedImage.createGraphics();
+                try {
+                    g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                    g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2d.drawImage(originalImage, 0, 0, targetWidth, targetHeight, null);
+                } finally {
+                    g2d.dispose();
+                }
+
+                ImageIO.write(resizedImage, "jpg", tempFile);
+                System.out.println("Resized receipt image from " + originalWidth + "x" + originalHeight + " to " + targetWidth + "x" + targetHeight);
+            } else {
+                file.transferTo(tempFile);
+            }
+        }
+        return tempFile;
+    }
+
+    private String resolveTessDataPath() {
+        // 1. Check system property or env var first
+        String configured = System.getProperty("tesseract.datapath");
+        if (configured == null || configured.trim().isEmpty()) {
+            configured = System.getenv("TESSDATA_PREFIX");
+        }
+        if (configured == null || configured.trim().isEmpty()) {
+            configured = tesseractDataPath;
+        }
+
+        if (configured != null && isValidTessDataDir(new File(configured))) {
+            return new File(configured).getAbsolutePath();
+        }
+
+        // 2. Common Linux / Docker / Windows candidate locations
+        String[] candidatePaths = {
+            "/usr/share/tessdata",
+            "/usr/share/tesseract-ocr/5/tessdata",
+            "/usr/share/tesseract-ocr/4.00/tessdata",
+            "/usr/local/share/tessdata",
+            "C:/Program Files/Tesseract-OCR/tessdata",
+            "C:/Program Files (x86)/Tesseract-OCR/tessdata"
+        };
+
+        for (String path : candidatePaths) {
+            File dir = new File(path);
+            if (isValidTessDataDir(dir)) {
+                System.out.println("Auto-detected valid Tesseract tessdata at: " + dir.getAbsolutePath());
+                return dir.getAbsolutePath();
+            }
+        }
+
+        return configured != null ? configured : "/usr/share/tessdata";
+    }
+
+    private boolean isValidTessDataDir(File dir) {
+        if (dir != null && dir.exists() && dir.isDirectory()) {
+            File engData = new File(dir, "eng.traineddata");
+            return engData.exists();
+        }
+        return false;
     }
 }
